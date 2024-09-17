@@ -1,0 +1,67 @@
+services: 
+  postgres:
+    image: postgres:latest
+    container_name: final_project_pakholkov
+    environment:
+      POSTGRES_PASSWORD: qwerty123
+      POSTGRES_USER: postgres
+      POSTGRES_DB: lira_db
+    volumes: 
+      - ./create_populate.sql:/docker-entrypoint-initdb.d/create_populate.sql
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: final_project_pakholkov_admin
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=user@domain.com
+      - PGADMIN_DEFAULT_PASSWORD=qwerty123
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
+      - PGADMIN_CONFIG_SERVER_MODE=False
+    volumes:
+      - ./servers.json:/pgadmin4/servers.json
+      - ./.pgpass:/tmp/.pgpass
+    entrypoint: >
+      /bin/sh -c "
+      mkdir -p /var/lib/pgadmin/storage/user_domain.com;
+      cp /run/secrets/pgpass /var/lib/pgadmin/storage/user_domain.com/.pgpass;
+      chown pgadmin:root /var/lib/pgadmin/storage/user_domain.com/.pgpass;
+      chmod 600 /var/lib/pgadmin/storage/user_domain.com/.pgpass;
+      /entrypoint.sh;
+      "
+    user: root
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    secrets:
+      - pgpass
+    #configs:
+      #- source: servers.json
+        #target: /pgadmin4/servers.json
+      #- source: pgpass
+        #target: /pgpass
+
+secrets:
+  pgpass:
+    file: ./.pgpass
+#configs:
+  #pgpass:
+    #content: final_project_pakholkov:5342:*:postgres:qwerty123
+  #servers.json:
+    #content: |
+      #{"Servers": {"1": {
+       # "Name": "Postgres Server",
+       # "Group": "Servers",
+       #"Host": "final_project_pakholkov",
+       #"Port": 5432,
+       #"MaintenanceDB": "postgres",
+       # "Username": "postgres",
+       # "PassFile": "/pgpass",
+       #"SSLMode": "prefer",
+       #"ConnectNow": true}}}
+
+    
